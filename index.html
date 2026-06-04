@@ -518,23 +518,43 @@ function showToast(msg) {
 }
 
 function downloadPNG(){
-  const btns=document.querySelectorAll('.send-btn,.sent-btn,.dl-btn,.nav-row,.feedback-btn,button');
+  const btns=document.querySelectorAll('.send-btn,.sent-btn,.dl-btn,.nav-row,.feedback-btn');
   btns.forEach(b=>b.style.display='none');
-  const target = document.querySelector('.wrap') || document.querySelector('.page');
+  
+  const target=document.querySelector('.wrap');
   html2canvas(target,{
     backgroundColor:'#8b4a3c',scale:2,useCORS:true,logging:false
   }).then(async canvas=>{
     btns.forEach(b=>b.style.display='');
-    canvas.toBlob(async blob=>{
-      const file = new File([blob],'day.png',{type:'image/png'});
+    
+    // Create WhatsApp status canvas 1080x1920
+    const statusCanvas = document.createElement('canvas');
+    statusCanvas.width = 1080;
+    statusCanvas.height = 1920;
+    const ctx = statusCanvas.getContext('2d');
+    
+    // Background
+    ctx.fillStyle = '#8b4a3c';
+    ctx.fillRect(0, 0, 1080, 1920);
+    
+    // Center the content card
+    const scale = Math.min(1000 / canvas.width, 1600 / canvas.height);
+    const w = canvas.width * scale;
+    const h = canvas.height * scale;
+    const x = (1080 - w) / 2;
+    const y = (1920 - h) / 2;
+    ctx.drawImage(canvas, x, y, w, h);
+    
+    statusCanvas.toBlob(async blob=>{
+      const file = new File([blob],'status.png',{type:'image/png'});
       if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
         try{
           await navigator.share({files:[file],title:'My day'});
         }catch(e){
-          if(e.name!=='AbortError') fallbackSave(canvas);
+          if(e.name!=='AbortError') fallbackSave(statusCanvas);
         }
       } else {
-        fallbackSave(canvas);
+        fallbackSave(statusCanvas);
       }
     },'image/png');
   }).catch(()=>{
@@ -542,6 +562,8 @@ function downloadPNG(){
     showToast('Try on desktop if this fails');
   });
 }
+
+
 
 
 
