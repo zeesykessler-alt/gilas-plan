@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Line</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  :root{--blush:#f5e6e0;--rose:#e8b4a0;--deep:#8b4a3c;--warm:#c47a5a;--cream:#fdf8f5;--text:#3a2a24;--muted:#9a7060;--green:#6b8f71;--green-light:#e8f0e9;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:var(--deep);color:white;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
+
+  .wrap{max-width:420px;width:100%;text-align:center;}
+
+  .top-tag{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--rose);margin-bottom:8px;opacity:0.8;}
+
+  .day-num{font-family:'Playfair Display',serif;font-size:72px;font-weight:400;color:white;line-height:1;margin-bottom:4px;opacity:0.15;position:absolute;top:24px;left:50%;transform:translateX(-50%);}
+
+  .date-display{font-size:12px;color:rgba(255,255,255,0.45);margin-bottom:40px;letter-spacing:1px;}
+
+  .quote-wrap{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:32px 28px;margin-bottom:12px;position:relative;}
+
+  .quote-mark{font-family:'Playfair Display',serif;font-size:60px;color:var(--rose);opacity:0.3;line-height:0;position:absolute;top:28px;left:22px;}
+
+  .quote-text{font-family:'Playfair Display',serif;font-size:22px;font-weight:400;line-height:1.45;color:white;position:relative;z-index:1;}
+
+  .quote-category{display:inline-block;background:rgba(255,255,255,0.08);border-radius:20px;padding:4px 12px;font-size:11px;color:rgba(255,255,255,0.5);letter-spacing:1px;text-transform:uppercase;margin-top:16px;}
+
+  .send-btn{width:100%;background:var(--green);color:white;border:none;border-radius:16px;padding:18px;font-family:'DM Sans',sans-serif;font-size:16px;font-weight:600;cursor:pointer;margin-bottom:10px;transition:all 0.2s;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;gap:8px;}
+  .send-btn:active{opacity:0.85;transform:scale(0.98);}
+
+  .sent-btn{width:100%;background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:18px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;margin-bottom:10px;transition:all 0.2s;-webkit-tap-highlight-color:transparent;}
+  .sent-btn:active{opacity:0.7;}
+  .dl-btn{width:100%;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.6);border:1px solid rgba(255,255,255,0.12);border-radius:16px;padding:14px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;margin-bottom:10px;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;gap:8px;}
+  .dl-btn:active{background:rgba(255,255,255,0.12);}
+
+  .nav-row{display:flex;gap:10px;margin-bottom:24px;}
+  .nav-btn{flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.6);border-radius:12px;padding:12px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+  .nav-btn:active{background:rgba(255,255,255,0.12);}
+
+  .progress-row{display:flex;align-items:center;gap:10px;margin-bottom:32px;}
+  .progress-bg{flex:1;height:3px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden;}
+  .progress-fill{height:100%;background:var(--rose);border-radius:2px;transition:width 0.5s ease;}
+  .progress-label{font-size:11px;color:rgba(255,255,255,0.35);white-space:nowrap;}
+
+  .sent-indicator{font-size:12px;color:var(--green);margin-bottom:8px;height:18px;}
+
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:white;color:var(--deep);padding:12px 24px;border-radius:30px;font-size:14px;font-weight:600;transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1);z-index:999;white-space:nowrap;}
+  .toast.show{transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top-tag">4-Month Journey · Day <span id="dayNumSmall">1</span></div>
+  <div class="date-display" id="dateDisplay"></div>
+
+  <div class="progress-row">
+    <div class="progress-bg"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-label" id="progressLabel">Day 1 of 120</div>
+  </div>
+
+  <div style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:16px;padding:14px 18px;margin-bottom:12px;text-align:left;">
+    <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--rose);opacity:0.8;margin-bottom:5px;font-weight:600;" id="phaseLabel">Week 1</div>
+    <div style="font-size:13px;color:white;font-weight:600;margin-bottom:3px;" id="phaseTitle">Stabilise</div>
+    <div style="font-size:12px;color:rgba(255,255,255,0.5);line-height:1.5;" id="phaseDesc">Loading...</div>
+  </div>
+
+  <div class="quote-wrap">
+    <div class="quote-mark">"</div>
+    <div class="quote-text" id="quoteText">Loading...</div>
+    <div class="quote-category" id="quoteCategory"></div>
+  </div>
+
+  <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:18px 20px;margin-bottom:12px;">
+    <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--rose);opacity:0.8;margin-bottom:8px;font-weight:600;">Task today</div>
+    <div style="font-size:15px;line-height:1.55;color:white;" id="taskText">Loading...</div>
+  </div>
+
+  <div class="sent-indicator" id="sentIndicator"></div>
+
+  <button class="send-btn" id="sendBtn" onclick="sendToGila()">
+    <span>📲</span> Send to Gila
+  </button>
+
+  <button class="sent-btn" onclick="markSent()">✓ Already sent today</button>
+  <button class="dl-btn" onclick="downloadPNG()">📸 Save as image</button>
+
+  <div class="nav-row">
+    <button class="nav-btn" onclick="changeDay(-1)">← Yesterday</button>
+    <button class="nav-btn" onclick="goToday()">Today</button>
+    <button class="nav-btn" onclick="changeDay(1)">Tomorrow →</button>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── 120 QUOTES sequenced across 4 months ──
+// Month 1 (Days 1-30): Mindset, grace, understanding your body
+// Month 2 (Days 31-60): Habits, food, consistency
+// Month 3 (Days 61-90): Momentum, deficit, movement
+// Month 4 (Days 91-120): Strength, identity, sustaining
+
+const quotes = [
+  // MONTH 1 — MINDSET & GRACE
+  {text:"Your body isn't broken. It's being protective.", cat:"Mindset"},
+  {text:"It's not a willpower problem. It's biology.", cat:"Mindset"},
+  {text:"Fat loss is fourth on your body's list of priorities right now. And that's not failure. That's physiology.", cat:"Mindset"},
+  {text:"You're not behind. You're rebuilding.", cat:"Mindset"},
+  {text:"Postpartum weight loss is not about discipline. It's about alignment.", cat:"Mindset"},
+  {text:"Nothing is wrong with you — the order was wrong.", cat:"Mindset"},
+  {text:"Your hunger signals are louder right now. You aren't imagining it. It's real. It's normal. It's okay.", cat:"Body"},
+  {text:"You cannot hate yourself into a healthier body.", cat:"Mindset"},
+  {text:"Your body deserves grace, not punishment.", cat:"Mindset"},
+  {text:"One high calorie day doesn't ruin anything. The spiral after is what used to.", cat:"Mindset"},
+  {text:"Stop trying to get it perfect. Start trying to get it right enough to be sustainable.", cat:"Mindset"},
+  {text:"You don't need motivation. You need a decision.", cat:"Mindset"},
+  {text:"Consistency beats perfection. Always.", cat:"Mindset"},
+  {text:"You are not starting over. You are starting different.", cat:"Mindset"},
+  {text:"Strong moms raise strong kids.", cat:"Mindset"},
+  {text:"Your wellbeing is an investment — not a distraction from motherhood.", cat:"Mindset"},
+  {text:"A confident mom is a better mom. Not because of her size, but because of how she feels.", cat:"Mindset"},
+  {text:"You're not unmotivated. You're overwhelmed.", cat:"Mindset"},
+  {text:"Motivation is a liar. It shows up when things feel exciting and disappears the second real life hits.", cat:"Mindset"},
+  {text:"You don't need motivation. You need nervous system safety.", cat:"Mindset"},
+  {text:"If you rely on motivation, you'll restart every Monday for the rest of your life.", cat:"Mindset"},
+  {text:"Build a mindset rooted in commitment, grace, and self-trust — and you win every time.", cat:"Mindset"},
+  {text:"Regulation beats motivation.", cat:"Mindset"},
+  {text:"You can love your kids and still want to feel like you again.", cat:"Mindset"},
+  {text:"Your goals matter because you matter.", cat:"Mindset"},
+  {text:"It's not selfish to want energy. It's not selfish to want confidence in your clothes.", cat:"Mindset"},
+  {text:"You deserve to feel good in your body again — not pressured, not rushed, not judged.", cat:"Mindset"},
+  {text:"This journey is not about being smaller. It's about being more you.", cat:"Mindset"},
+  {text:"Your worth isn't measured by your weight. But your health still matters.", cat:"Mindset"},
+  {text:"Done is better than perfect.", cat:"Mindset"},
+
+  // MONTH 2 — HABITS & FOOD
+  {text:"Postpartum fat loss is less about precision and more about predictability.", cat:"Food"},
+  {text:"You need structure, not suffering.", cat:"Food"},
+  {text:"Your meals don't need to be aesthetic. They need to be consistent.", cat:"Food"},
+  {text:"Eat breakfast. Everything else gets easier after that.", cat:"Food"},
+  {text:"Protein is the queen of postpartum nutrition.", cat:"Food"},
+  {text:"Protein stabilises hunger, supports muscle, reduces cravings and keeps you full longer.", cat:"Food"},
+  {text:"Carbs are not the enemy. Unpredictable carbs are.", cat:"Food"},
+  {text:"Carbs at breakfast = stable hunger all day.", cat:"Food"},
+  {text:"Carbs at dinner = no nighttime overeating.", cat:"Food"},
+  {text:"Low-carb postpartum = burnout and cravings. Balanced-carb postpartum = stability and progress.", cat:"Food"},
+  {text:"If you need to adjust calories, adjust fats first — not carbs.", cat:"Food"},
+  {text:"A treat is not a setback. It's part of balance.", cat:"Food"},
+  {text:"One choice doesn't define your day or your progress.", cat:"Mindset"},
+  {text:"Eat the cinnamon roll. Log it. Enjoy it. Keep going.", cat:"Mindset"},
+  {text:"Sustainable weight loss is built on average habits, not perfect days.", cat:"Mindset"},
+  {text:"When you plan for indulgences instead of fearing them, you build trust with yourself.", cat:"Mindset"},
+  {text:"Fed moms aren't frantic.", cat:"Food"},
+  {text:"Snacks prevent spirals.", cat:"Food"},
+  {text:"Eat every 3–4 hours. Stable blood sugar changes everything.", cat:"Food"},
+  {text:"Sleep-deprived hunger is not a self-control issue. It's biology. Eat carbs.", cat:"Body"},
+  {text:"Emotional hunger is not weakness. It's a signal. Protein + pause + real meal.", cat:"Body"},
+  {text:"Most nighttime overeating is caused by under-eating earlier in the day.", cat:"Food"},
+  {text:"The fix for nighttime eating is a better breakfast — not more willpower at night.", cat:"Food"},
+  {text:"Skipping meals to compensate never works. It always backfires.", cat:"Food"},
+  {text:"If it requires 17 ingredients or three dirty pans, we're not doing it.", cat:"Food"},
+  {text:"Find meals you love that hit your targets and repeat them over and over.", cat:"Food"},
+  {text:"Hunger before a meal is normal. Shaking and faint is your body begging you to eat sooner.", cat:"Body"},
+  {text:"Eating before you're desperate is the whole strategy.", cat:"Food"},
+  {text:"Your body isn't resisting weight loss. It's protecting you.", cat:"Body"},
+  {text:"A good week doesn't require a perfect week.", cat:"Mindset"},
+
+  // MONTH 3 — MOMENTUM & DEFICIT
+  {text:"Postpartum fat loss is math, but postpartum success is mindset.", cat:"Progress"},
+  {text:"Postpartum fat loss doesn't require precision. It requires consistency.", cat:"Progress"},
+  {text:"Track weekly weight trends — not daily fluctuations. Daily weight is just noise.", cat:"Progress"},
+  {text:"The number on the scale is just data. It does not define you.", cat:"Progress"},
+  {text:"If the scale hasn't moved in 2–3 weeks, check consistency first. Not calories.", cat:"Progress"},
+  {text:"Adjust one variable at a time. Never everything at once.", cat:"Progress"},
+  {text:"You don't need more discipline. You need better diagnostics.", cat:"Progress"},
+  {text:"A gentle deficit works beautifully. An aggressive one always backfires.", cat:"Progress"},
+  {text:"Walking is not the easy way out. It is one of the most effective postpartum fat loss tools.", cat:"Movement"},
+  {text:"Walking lowers cortisol, burns fat without spiking hunger, and stabilises blood sugar.", cat:"Movement"},
+  {text:"Walking is wildly underrated. It's foundational, not optional.", cat:"Movement"},
+  {text:"If a workout leaves you exhausted instead of energised, it's not postpartum-friendly.", cat:"Movement"},
+  {text:"You don't need more intensity. You need more consistency.", cat:"Movement"},
+  {text:"Movement is movement. It all counts.", cat:"Movement"},
+  {text:"10,000 steps isn't a workout — it's accumulation. Every step adds up.", cat:"Movement"},
+  {text:"Strength training is not for dieting. It's for longevity.", cat:"Movement"},
+  {text:"Postpartum weight loss is NOT about intensity. It's about hormone-friendly movement that lowers stress.", cat:"Movement"},
+  {text:"You are a mother, not a fitness influencer with 8 hours of childcare.", cat:"Mindset"},
+  {text:"When in doubt: eat protein, drink water, take a walk.", cat:"Progress"},
+  {text:"Consistency isn't built during the easy weeks. It's built during the messy ones.", cat:"Mindset"},
+  {text:"Show up when everyone else gets tired. That's how you win.", cat:"Mindset"},
+  {text:"The old you quit when things got hard. The new you keeps going while things are hard.", cat:"Mindset"},
+  {text:"Setbacks are expected. They don't mean you failed. They mean you're postpartum.", cat:"Mindset"},
+  {text:"One walk. One high-protein meal. One moment of choosing not to quit. These stack.", cat:"Progress"},
+  {text:"Small wins compound. They become your new normal.", cat:"Progress"},
+  {text:"You don't need a perfect month. You need one decision, made repeatedly.", cat:"Mindset"},
+  {text:"Balance creates sustainability. Sustainability creates results.", cat:"Mindset"},
+  {text:"Burnout isn't a badge of honour. Balance is.", cat:"Mindset"},
+  {text:"Your transformation starts in your mindset. Your body simply follows.", cat:"Mindset"},
+  {text:"Be the one who follows through.", cat:"Mindset"},
+
+  // MONTH 4 — IDENTITY & SUSTAINING
+  {text:"You are not doing this to be smaller. You're doing this to feel more alive.", cat:"Identity"},
+  {text:"When you start feeling proud of yourself, everything else in your life gets better.", cat:"Identity"},
+  {text:"You show up differently in your marriage. In your work. As a mum. When you feel good.", cat:"Identity"},
+  {text:"Food is fuel and freedom.", cat:"Food"},
+  {text:"You enjoy food without guilt and without losing control. That's the goal.", cat:"Food"},
+  {text:"One day at a time is enough.", cat:"Mindset"},
+  {text:"You are capable. You are resilient. You are worth the work.", cat:"Identity"},
+  {text:"You were never broken. You just needed a plan that loves you back.", cat:"Identity"},
+  {text:"Keep going. Not because you should. But because you deserve to feel strong.", cat:"Identity"},
+  {text:"This is the moment you choose you — fully, intentionally, and without apology.", cat:"Identity"},
+  {text:"You don't need to hustle. You need to show up, repeatedly, in small ways.", cat:"Identity"},
+  {text:"Strong, supported, and capable — that's what this was always about.", cat:"Identity"},
+  {text:"You have too much to offer to give up on yourself.", cat:"Identity"},
+  {text:"People quit all the time. But you won't.", cat:"Identity"},
+  {text:"Be the one who keeps choosing herself.", cat:"Identity"},
+  {text:"The life you want becomes the life you live — through small consistent actions.", cat:"Identity"},
+  {text:"You don't need to shrink yourself to be enough.", cat:"Identity"},
+  {text:"You only need a little structure, a little consistency, and a little belief that you're worth the effort.", cat:"Identity"},
+  {text:"Because you are.", cat:"Identity"},
+  {text:"Loose skin. Stretch marks. Softness. And still — you showed up.", cat:"Identity"},
+  {text:"The biggest shift is internal. When the flip switches in your brain, everything changes.", cat:"Identity"},
+  {text:"You proved to yourself that you can stay consistent without spiralling.", cat:"Identity"},
+  {text:"This is the mindset that makes the results last.", cat:"Mindset"},
+  {text:"You didn't just lose weight. You changed how you talk to yourself.", cat:"Identity"},
+  {text:"I did that. I actually did that.", cat:"Identity"},
+  {text:"You are not doing this alone.", cat:"Identity"},
+  {text:"Showing up imperfectly still counts.", cat:"Mindset"},
+  {text:"Showing up halfway still counts.", cat:"Mindset"},
+  {text:"Showing up late still counts.", cat:"Mindset"},
+  {text:"Not showing up at all is the only option that doesn't.", cat:"Mindset"},
+];
+
+// Tasks with movement included from Day 1
+
+const tasks = [
+  // WEEK 1 — Breakfast + 5 min walk
+  "One thing today — eat breakfast before you're hungry, not after you're desperate, and if you can, take a 5 minute walk at any point",
+  "Breakfast today, anything counts, and a 5 minute walk — around the block, to the car, anywhere",
+  "Eat breakfast before you leave the house and try a 5 minute walk today — that's literally it",
+  "Just breakfast and a 5 minute walk today, no fuss, you already know you can do this one",
+  "Breakfast within an hour of waking and a short walk today — 5 to 10 minutes is the whole goal this week",
+  "One job today — breakfast before the chaos starts and a 5 to 10 minute walk whenever you can fit it",
+  "Week 1 done if you ate breakfast every day and moved your body a little — did you? 😂",
+
+  // WEEK 2 — Breakfast + lunch + 10 min walk
+  "Breakfast in the morning, lunch before you're about to faint, and a 10 minute walk today — eat before desperate",
+  "Two meals today — breakfast and lunch at a normal time — and a 10 minute walk, stroller or on foot, either works",
+  "Breakfast and lunch before the shaking starts and a 10 minute walk today — those are the three things",
+  "Breakfast, then lunch at an actual lunchtime — not 3pm in the car — and a short 10 minute walk",
+  "Breakfast and lunch today and a 10 minute walk — walking lowers cortisol which means less frantic hunger",
+  "Eat before your body sends the emergency signal — breakfast and lunch — and a 10 minute walk today",
+  "Week 2 — breakfast, lunch at a normal time, and a 10 minute walk — how's it going 😂",
+
+  // WEEK 3 — Three meals + 10-15 min walk
+  "Three meals today — breakfast, lunch and supper, no skipping — and a 10 to 15 minute walk",
+  "Breakfast, lunch and supper — even kids' leftovers count as supper — and a 10 to 15 minute walk today",
+  "Three proper meals and a 10 to 15 minute walk — not bars, not grapes and then ice cream 😂",
+  "Three meals before you're desperate each time and a 10 minute walk today — that's the whole thing",
+  "No skipping today — three meals and a 10 to 15 minute walk, you can do boring for one day",
+  "Breakfast, lunch and supper and a 10 minute walk — eating three times a day plus moving is the plan",
+  "Week 3 — did you eat three meals today and take a short walk? One message back — yes or chaos 😂",
+
+  // MONTH 2 — Three meals + protein + water + 10-20 min walk daily
+  "Three meals, something with protein in at least one of them, and a 10 to 20 minute walk today",
+  "Breakfast, lunch and supper, drink actual water today and take a 15 minute walk — not just coffee",
+  "Three meals, protein at breakfast and a 15 minute walk — notice if you're less frantic at 3pm",
+  "Protein at breakfast today and a 15 to 20 minute walk — protein changes your whole day",
+  "Three meals, protein at breakfast and a 15 to 20 minute walk — Greek yoghurt with PB like your good day",
+  "Water today — six to eight glasses — and a 15 minute walk today, stroller counts completely",
+  "Three meals, protein at lunch and a 15 to 20 minute walk today",
+  "Eat before desperate, protein at two meals and a 15 minute walk — those are today's three things",
+  "Three meals, one glass of water before each one and a 15 to 20 minute walk",
+  "Protein at every meal and a 20 minute walk today — eggs, chicken, tuna, yoghurt, cheese, any of those",
+  "Three meals, stay hydrated and a 20 minute walk — those three things will actually shift how you feel",
+  "Protein at breakfast, a 20 minute walk and notice your 3pm — is the emergency pita in the car thing happening less?",
+  "Three meals with protein at each, water throughout and a 20 minute walk — boring, repeatable, it works",
+  "Eat regularly, add protein, drink water and walk 20 minutes — the smoothie counts as an extra but not as a meal",
+  "Three meals, don't skip lunch even if you're busy and walk 15 to 20 minutes today",
+  "Protein at breakfast, lunch and supper, a 20 minute walk and your hunger should be calmer now",
+  "Three meals, six glasses of water and a 20 minute walk — check your energy by evening",
+  "Three meals, a small snack at 3pm — apple and cheese or yoghurt — and a 20 minute walk",
+  "Protein, water, three meals and a 20 minute walk — you're building something real here",
+  "Three meals today and a 20 minute walk — if you only do one thing, eat breakfast first like on your good day",
+  "Mid morning snack if breakfast isn't holding you to lunch, and a 20 minute walk today",
+  "Three meals, protein and a 20 minute walk — same breakfast every day is absolutely fine",
+  "Water before meals and a 20 minute walk — both actually help regulate hunger signals",
+  "Protein at every meal and a 20 minute walk today — your body is starting to stabilise",
+  "Three meals, hydration and a 20 minute walk — the frantic hungry feeling gets quieter when you eat consistently",
+  "Keep eating regularly and walk 20 minutes today — consistency is the only thing that matters right now",
+  "Three meals, protein and a 20 minute walk — you're past the hardest part now",
+  "Notice how different your evenings are when you've eaten properly all day — less kids leftovers grazing — and walk today",
+  "Three meals, water, protein and a 20 minute walk — boring is good, boring means sustainable",
+  "One month — three meals, protein, water and a 20 minute walk every day — that's not nothing, that's actually everything",
+  "Keep the meals consistent, add protein wherever you can and walk 20 minutes today",
+  "Three meals, water and a 20 minute walk — that's your foundation now",
+  "Protein at breakfast and a 20 minute walk today — eggs, yoghurt or cheese on toast, something with substance",
+  "Three meals today and a 20 minute walk — is the all-or-nothing urge quieter? It should be starting to be",
+  "Eat regularly, drink water, add protein and walk 20 minutes — same thing every day",
+  "Three meals, protein and a 20 minute walk — the restrict to starve to binge thing breaks when you eat consistently",
+  "Eating something yummy doesn't mean it's the end — tomorrow you wake up and be a normal sensible human again 😂 — and walk today",
+  "Three meals, protein, water and a 20 minute walk — keep going",
+  "You're halfway through Month 2 — still eating three meals and walking daily? That is the whole win",
+
+  // MONTH 3 — Three meals + protein + 30 min walk + gentle deficit
+  "Three meals, protein, water and a 30 minute walk today — Zone 2 pace, you can talk but slightly breathless",
+  "Add a 30 minute walk today — school run counts, stroller counts, around the block counts",
+  "Three meals, a 30 minute walk and notice how your evening feels — walking lowers cortisol which means less frantic hunger",
+  "30 minute walk today at Zone 2 pace — you can talk but slightly breathless — that's the sweet spot",
+  "Three meals, protein and a 30 minute walk — your body is ready for this level now",
+  "Walk 30 minutes today, outside if possible — it will genuinely improve your mood for the rest of the day",
+  "Three meals and a 30 minute walk — that's it, nothing else",
+  "Walking is the most underrated thing in this whole plan — walk 30 minutes today",
+  "Three meals, protein, water and a 30 minute walk — notice how your evening feels compared to Month 1",
+  "30 minutes of walking today — stroller, around the block or treadmill, all valid",
+  "Three meals and a 30 minute walk today — consistency over intensity, always",
+  "Gentle deficit starts now — eat your three meals but slightly smaller portions, not starving, just slightly less — and walk 30 minutes",
+  "Three meals, protein, slightly smaller portions and a 30 minute walk — gentle, not aggressive, not a crash",
+  "Your deficit is 300 to 500 cal below maintenance — don't slash, just trim slightly — and walk 30 minutes today",
+  "Three meals, look at serving sizes on labels and walk 30 minutes today — awareness not obsession",
+  "Walk 30 minutes today — you've been building to this",
+  "Three meals, protein, gentle deficit and a 30 minute walk — your body is stable enough now",
+  "Walk 30 minutes today and notice how much better your mood is afterward — every single time",
+  "Three meals, protein, a 30 minute walk and water — you have an actual routine now",
+  "Gentle deficit — keep the carbs, never skip meals to create the gap — and walk 30 minutes today",
+  "Three meals, a 30 minute walk and protein — this is what structured fat loss looks like for you",
+  "30 minute walk today",
+  "Three meals, gentle deficit and a 30 minute walk — keep carbs at every meal, don't cut them",
+  "Walk 30 minutes and three meals and protein — real momentum now",
+  "Notice your energy this month — more consistent meals and daily walking means more consistent energy",
+  "Three meals, deficit and a 30 minute walk — weigh yourself once this week, not daily",
+  "Weekly weigh in only — daily weight is just noise — and walk 30 minutes today",
+  "Three meals, a 30 minute walk and protein — Month 3 is about momentum",
+  "Keep walking 30 minutes and keep eating regularly — the results are happening even when you can't see them yet",
+  "Month 3 done — three meals, protein, a 30 minute walk and a gentle deficit consistently — you did all of it",
+
+  // MONTH 4 — Full routine: three meals + strength + 30-45 min walk
+  "Add one strength session this week — 20 minutes, bodyweight is completely fine — and walk 30 to 45 minutes today",
+  "Three meals, a 30 to 45 minute walk and try this: 10 squats, 10 rows, 20 second plank, repeat 3 times",
+  "Strength today — even 10 minutes, squat, hinge, push, pull, core — and a 30 to 45 minute walk",
+  "Three meals, a 30 to 45 minute walk and one strength session — you genuinely don't need a gym",
+  "Strength 1 to 2 times this week, short sessions, full body — and walk 30 to 45 minutes today",
+  "Three meals, protein, a 30 to 45 minute walk and strength — this is your full routine now",
+  "Add a second strength session this week and walk 30 to 45 minutes today",
+  "Three meals, a 30 to 45 minute walk and strength — notice how your body feels stronger",
+  "Keep the deficit gentle, keep the meals consistent, keep walking 30 to 45 minutes daily",
+  "Strength today — 20 to 30 minutes — and a 30 to 45 minute walk, you've been building to this for 3 months",
+  "Three meals, protein, water, a 30 to 45 minute walk and strength — you have a real routine",
+  "Notice how different you feel compared to Day 1 — the emergency pita at 3pm, when's the last time that happened?",
+  "Strength twice this week and walk 30 to 45 minutes today",
+  "Three meals, a 30 to 45 minute walk and strength — boring is working",
+  "The people who see results are the ones who kept going when it got boring — that's you — walk today",
+  "Three meals, protein, a 30 to 45 minute walk and strength — you're in the strong phase now",
+  "Strength today and a 30 to 45 minute walk — this is why your metabolism stays strong",
+  "Three meals, deficit, a 30 to 45 minute walk and strength — full routine",
+  "Notice the all-or-nothing urge — is it quieter? It should be — you've been consistent — walk today",
+  "Keep the meals consistent, strength twice, walk 30 to 45 minutes daily",
+  "Three meals, protein, a 30 to 45 minute walk and strength — one more week",
+  "You've been doing this for nearly 4 months — look back at Day 1 — walk today",
+  "Strength today and a 30 to 45 minute walk",
+  "Three meals, a 30 to 45 minute walk and strength — almost there",
+  "Keep going — the version of you that started this is not the version finishing it — walk today",
+  "Final week — three meals, protein, a 30 to 45 minute walk and strength every day",
+  "You didn't quit when it got hard — that's the whole thing — walk today",
+  "Three meals, a 30 to 45 minute walk and strength — last few days",
+  "You built something real, sustainable, yours — and you walk every day now",
+  "Four months done — this is only the beginning",
+];
+
+
+
+
+
+
+
+
+
+const START_DATE_KEY = 'pp_group_start';
+const SENT_KEY = 'pp_sent_days';
+
+function getStartDate() {
+  let d = localStorage.getItem(START_DATE_KEY);
+  if (!d) {
+    d = new Date().toISOString().split('T')[0];
+    localStorage.setItem(START_DATE_KEY, d);
+  }
+  return new Date(d);
+}
+
+function getDayNumber(forDate) {
+  const start = getStartDate();
+  const target = forDate || new Date();
+  const diff = Math.floor((new Date(target.toDateString()) - new Date(start.toDateString())) / 86400000);
+  return Math.max(0, Math.min(diff, 119));
+}
+
+function getSentDays() {
+  return JSON.parse(localStorage.getItem(SENT_KEY) || '[]');
+}
+
+function markDaySent(dayNum) {
+  const sent = getSentDays();
+  if (!sent.includes(dayNum)) { sent.push(dayNum); localStorage.setItem(SENT_KEY, JSON.stringify(sent)); }
+}
+
+// ── DISPLAY ──
+let viewingDay = getDayNumber();
+
+// Phase descriptions for each week/month
+const phases = [
+  // Week 1, Days 0-6
+  {label:"Week 1",title:"Stabilise — Just Breakfast",desc:"This week is about one thing only: eating breakfast before you're desperate. Lauren's guide says stabilisation comes before fat loss. Your body is in Season 1 which means it needs regular meals before anything else."},
+  {label:"Week 1",title:"Stabilise — Just Breakfast",desc:"This week is about one thing only: eating breakfast before you're desperate. Lauren's guide says stabilisation comes before fat loss. Your body is in Season 1 which means it needs regular meals before anything else."},
+  {label:"Week 1",title:"Stabilise — Just Breakfast",desc:"This week is about one thing only: eating breakfast before you're desperate. Lauren's guide says stabilisation comes before fat loss. Your body is in Season 1 which means it needs regular meals before anything else."},
+  {label:"Week 1",title:"Stabilise — Just Breakfast",desc:"This week is about one thing only: eating breakfast before you're desperate. Lauren's guide says stabilisation comes before fat loss. Your body is in Season 1 which means it needs regular meals before anything else."},
+  {label:"Week 1",title:"Stabilise — Just Breakfast",desc:"This week is about one thing only: eating breakfast before you're desperate. Lauren's guide says stabilisation comes before fat loss. Your body is in Season 1 which means it needs regular meals before anything else."},
+  {label:"Week 1",title:"Stabilise — Just Breakfast",desc:"This week is about one thing only: eating breakfast before you're desperate. Lauren's guide says stabilisation comes before fat loss. Your body is in Season 1 which means it needs regular meals before anything else."},
+  {label:"Week 1",title:"Stabilise — Just Breakfast",desc:"This week is about one thing only: eating breakfast before you're desperate. Lauren's guide says stabilisation comes before fat loss. Your body is in Season 1 which means it needs regular meals before anything else."},
+  // Week 2, Days 7-13
+  {label:"Week 2",title:"Stabilise — Breakfast + Lunch",desc:"Week 2 adds one thing: eating lunch before the shaking starts. You don't need to do anything else. The guide says the restrict-starve-binge cycle breaks when you eat before desperate — two meals at normal times is the whole task."},
+  {label:"Week 2",title:"Stabilise — Breakfast + Lunch",desc:"Week 2 adds one thing: eating lunch before the shaking starts. You don't need to do anything else. The guide says the restrict-starve-binge cycle breaks when you eat before desperate — two meals at normal times is the whole task."},
+  {label:"Week 2",title:"Stabilise — Breakfast + Lunch",desc:"Week 2 adds one thing: eating lunch before the shaking starts. You don't need to do anything else. The guide says the restrict-starve-binge cycle breaks when you eat before desperate — two meals at normal times is the whole task."},
+  {label:"Week 2",title:"Stabilise — Breakfast + Lunch",desc:"Week 2 adds one thing: eating lunch before the shaking starts. You don't need to do anything else. The guide says the restrict-starve-binge cycle breaks when you eat before desperate — two meals at normal times is the whole task."},
+  {label:"Week 2",title:"Stabilise — Breakfast + Lunch",desc:"Week 2 adds one thing: eating lunch before the shaking starts. You don't need to do anything else. The guide says the restrict-starve-binge cycle breaks when you eat before desperate — two meals at normal times is the whole task."},
+  {label:"Week 2",title:"Stabilise — Breakfast + Lunch",desc:"Week 2 adds one thing: eating lunch before the shaking starts. You don't need to do anything else. The guide says the restrict-starve-binge cycle breaks when you eat before desperate — two meals at normal times is the whole task."},
+  {label:"Week 2",title:"Stabilise — Breakfast + Lunch",desc:"Week 2 adds one thing: eating lunch before the shaking starts. You don't need to do anything else. The guide says the restrict-starve-binge cycle breaks when you eat before desperate — two meals at normal times is the whole task."},
+  // Week 3, Days 14-20
+  {label:"Week 3",title:"Stabilise — Three Meals",desc:"Week 3 completes the foundation: three proper meals a day, no skipping. Lauren says Season 1 is not about fat loss — it's about stabilising hunger, energy and blood sugar. Three meals is the whole plan this week. Walking starts gently now too: just 5 to 10 minutes."},
+  {label:"Week 3",title:"Stabilise — Three Meals",desc:"Week 3 completes the foundation: three proper meals a day, no skipping. Lauren says Season 1 is not about fat loss — it's about stabilising hunger, energy and blood sugar. Three meals is the whole plan this week. Walking starts gently now too: just 5 to 10 minutes."},
+  {label:"Week 3",title:"Stabilise — Three Meals",desc:"Week 3 completes the foundation: three proper meals a day, no skipping. Lauren says Season 1 is not about fat loss — it's about stabilising hunger, energy and blood sugar. Three meals is the whole plan this week. Walking starts gently now too: just 5 to 10 minutes."},
+  {label:"Week 3",title:"Stabilise — Three Meals",desc:"Week 3 completes the foundation: three proper meals a day, no skipping. Lauren says Season 1 is not about fat loss — it's about stabilising hunger, energy and blood sugar. Three meals is the whole plan this week. Walking starts gently now too: just 5 to 10 minutes."},
+  {label:"Week 3",title:"Stabilise — Three Meals",desc:"Week 3 completes the foundation: three proper meals a day, no skipping. Lauren says Season 1 is not about fat loss — it's about stabilising hunger, energy and blood sugar. Three meals is the whole plan this week. Walking starts gently now too: just 5 to 10 minutes."},
+  {label:"Week 3",title:"Stabilise — Three Meals",desc:"Week 3 completes the foundation: three proper meals a day, no skipping. Lauren says Season 1 is not about fat loss — it's about stabilising hunger, energy and blood sugar. Three meals is the whole plan this week. Walking starts gently now too: just 5 to 10 minutes."},
+  {label:"Week 3",title:"Stabilise — Three Meals",desc:"Week 3 completes the foundation: three proper meals a day, no skipping. Lauren says Season 1 is not about fat loss — it's about stabilising hunger, energy and blood sugar. Three meals is the whole plan this week. Walking starts gently now too: just 5 to 10 minutes."},
+];
+// Fill remaining days with month phases
+const monthPhases = [
+  {label:"Month 2",title:"Consistency — Protein + Water",desc:"Month 2 adds protein at every meal and proper hydration. Lauren says protein stabilises hunger, supports muscle and reduces cravings. Your goal is 25 to 35g per meal. Walking builds to 10 to 20 minutes daily this month."},
+  {label:"Month 3",title:"Momentum — Walking + Gentle Deficit",desc:"Month 3 adds a daily walk and a gentle deficit. Lauren says walking is the most underrated fat loss tool — it lowers cortisol, burns fat without spiking hunger and stabilises blood sugar. Your deficit starts gently: 300 to 500 calories below your maintenance. Strength starts 1 to 2x per week."},
+  {label:"Month 4",title:"Strength + Sustaining",desc:"Month 4 is about building strength and making everything automatic. Strength 2 to 3 times a week, walking daily, meals consistent. Lauren says this is when fat loss becomes visible and the identity shift happens — you become someone who takes care of herself."},
+];
+while(phases.length < 120) {
+  const idx = phases.length;
+  if(idx < 60) phases.push(monthPhases[0]);
+  else if(idx < 90) phases.push(monthPhases[1]);
+  else phases.push(monthPhases[2]);
+}
+
+function render() {
+  const dayNum = viewingDay;
+  const quote = quotes[dayNum] || quotes[0];
+  const task = tasks[dayNum] || tasks[0];
+  const phase = phases[dayNum] || phases[0];
+  const sent = getSentDays().includes(dayNum);
+
+  document.getElementById('quoteText').textContent = quote.text;
+  document.getElementById('quoteCategory').textContent = quote.cat;
+  document.getElementById('taskText').textContent = task;
+  document.getElementById('phaseLabel').textContent = phase.label;
+  document.getElementById('phaseTitle').textContent = phase.title;
+  document.getElementById('phaseDesc').textContent = phase.desc;
+  document.getElementById('dayNumSmall').textContent = dayNum + 1;
+
+  const d = new Date(getStartDate());
+  d.setDate(d.getDate() + dayNum);
+  document.getElementById('dateDisplay').textContent = d.toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long'});
+
+  const pct = ((dayNum + 1) / 120 * 100).toFixed(1);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = 'Day ' + (dayNum+1) + ' of 120';
+
+  document.getElementById('sentIndicator').textContent = sent ? '✓ Sent today' : '';
+  document.getElementById('sendBtn').style.opacity = sent ? '0.5' : '1';
+}
+
+// Days that start a new phase
+const phaseStartDays = [0, 7, 14, 21, 60, 90];
+
+function sendToGila() {
+  const dayNum = viewingDay;
+  const task = tasks[dayNum] || tasks[0];
+  const phase = phases[dayNum] || phases[0];
+
+  const isNewPhase = phaseStartDays.includes(dayNum);
+  const phaseBlock = isNewPhase ? `\n${phase.desc}\n` : '';
+
+  const msg = `Day ${dayNum+1} — ${phase.label}: ${phase.title}\n${phaseBlock}\n*Task today:* ${task}`;
+  const encoded = encodeURIComponent(msg);
+  window.open('https://wa.me/447831916622?text=' + encoded, '_blank');
+  markDaySent(dayNum);
+  render();
+  showToast('Opening WhatsApp ✓');
+}
+
+function markSent() {
+  markDaySent(viewingDay);
+  render();
+  showToast('Marked as sent ✓');
+}
+
+function changeDay(dir) {
+  viewingDay = Math.max(0, Math.min(119, viewingDay + dir));
+  render();
+}
+
+function goToday() {
+  viewingDay = getDayNumber();
+  render();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function downloadPNG(){
+  const btns=document.querySelectorAll('.send-btn,.sent-btn,.dl-btn,.nav-row,.feedback-btn');
+  btns.forEach(b=>b.style.display='none');
+  html2canvas(document.querySelector('.wrap'),{
+    backgroundColor:'#8b4a3c',scale:2,useCORS:true,logging:false
+  }).then(canvas=>{
+    btns.forEach(b=>b.style.display='');
+    // On iPhone, open in new tab so user can long-press → Save to Photos
+    const imgData = canvas.toDataURL('image/png');
+    const win = window.open('','_blank');
+    if(win){
+      win.document.write('<html><body style="margin:0;background:#000"><img src="'+imgData+'" style="max-width:100%;display:block"><p style="color:white;text-align:center;font-family:sans-serif;padding:10px;font-size:14px">Long press the image → Save to Photos</p></body></html>');
+      win.document.close();
+    } else {
+      // Fallback: direct download
+      const link=document.createElement('a');
+      link.download='day-'+(viewingDay+1)+'.png';
+      link.href=imgData;
+      link.click();
+    }
+    showToast('Long press the image to save ✓');
+  }).catch(()=>{
+    btns.forEach(b=>b.style.display='');
+    showToast('Try on desktop if this fails');
+  });
+}).then(canvas=>{
+    btns.forEach(b=>b.style.display='');
+    const link=document.createElement('a');
+    link.download=`day-${viewingDay+1}.png`;
+    link.href=canvas.toDataURL('image/png');
+    link.click();
+    showToast('Downloaded ✓');
+  }).catch(()=>{
+    btns.forEach(b=>b.style.display='');
+    showToast('Download failed — try on desktop');
+  });
+}
+
+render();
+</script>
+</body>
+</html>
