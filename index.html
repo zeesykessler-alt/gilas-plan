@@ -542,17 +542,6 @@ function downloadPNG(){
     btns.forEach(b=>b.style.display='');
     showToast('Try on desktop if this fails');
   });
-}).then(canvas=>{
-    btns.forEach(b=>b.style.display='');
-    const link=document.createElement('a');
-    link.download=`day-${viewingDay+1}.png`;
-    link.href=canvas.toDataURL('image/png');
-    link.click();
-    showToast('Downloaded ✓');
-  }).catch(()=>{
-    btns.forEach(b=>b.style.display='');
-    showToast('Download failed — try on desktop');
-  });
 }
 
 render();
