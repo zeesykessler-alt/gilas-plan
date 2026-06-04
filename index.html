@@ -518,31 +518,32 @@ function showToast(msg) {
 }
 
 function downloadPNG(){
-  const btns=document.querySelectorAll('.send-btn,.sent-btn,.dl-btn,.nav-row,.feedback-btn');
+  const btns=document.querySelectorAll('.send-btn,.sent-btn,.dl-btn,.nav-row,.feedback-btn,button');
   btns.forEach(b=>b.style.display='none');
-  html2canvas(document.querySelector('.wrap'),{
+  const target = document.querySelector('.wrap') || document.querySelector('.page');
+  html2canvas(target,{
     backgroundColor:'#8b4a3c',scale:2,useCORS:true,logging:false
-  }).then(canvas=>{
+  }).then(async canvas=>{
     btns.forEach(b=>b.style.display='');
-    // On iPhone, open in new tab so user can long-press → Save to Photos
-    const imgData = canvas.toDataURL('image/png');
-    const win = window.open('','_blank');
-    if(win){
-      win.document.write('<html><body style="margin:0;background:#000"><img src="'+imgData+'" style="max-width:100%;display:block"><p style="color:white;text-align:center;font-family:sans-serif;padding:10px;font-size:14px">Long press the image → Save to Photos</p></body></html>');
-      win.document.close();
-    } else {
-      // Fallback: direct download
-      const link=document.createElement('a');
-      link.download='day-'+(viewingDay+1)+'.png';
-      link.href=imgData;
-      link.click();
-    }
-    showToast('Long press the image to save ✓');
+    canvas.toBlob(async blob=>{
+      const file = new File([blob],'day.png',{type:'image/png'});
+      if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+        try{
+          await navigator.share({files:[file],title:'My day'});
+        }catch(e){
+          if(e.name!=='AbortError') fallbackSave(canvas);
+        }
+      } else {
+        fallbackSave(canvas);
+      }
+    },'image/png');
   }).catch(()=>{
     btns.forEach(b=>b.style.display='');
     showToast('Try on desktop if this fails');
   });
 }
+
+
 
 render();
 </script>
